@@ -10,19 +10,20 @@ import { Badge } from '@/components/ui/badge';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AuditDetailPage({ params }: { params: { id: string } }) {
+export default async function AuditDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const user = await requireUser();
   const supabase = await createClient();
 
   const { data: job, error } = await supabase
     .from('audit_jobs')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id)
     .eq('user_id', user.id)
     .single();
   if (error || !job) redirect('/audits');
 
-  const { data: results } = await supabase.from('audit_results').select('*').eq('job_id', params.id).order('created_at');
+  const { data: results } = await supabase.from('audit_results').select('*').eq('job_id', id).order('created_at');
 
   const isProcessing = job.status === 'pending' || job.status === 'processing';
 

@@ -1,8 +1,9 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import yaml from 'js-yaml';
 import { createClient } from '@/lib/supabase/server';
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const format = request.nextUrl.searchParams.get('format') || 'json';
 
   try {
@@ -19,7 +20,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const { data: job, error: jobError } = await supabase
       .from('audit_jobs')
       .select('*')
-      .eq('id', params.id)
+      .eq('id', id)
       .eq('user_id', user.id)
       .single();
 
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const { data: results, error: resultsError } = await supabase
       .from('audit_results')
       .select('*')
-      .eq('job_id', params.id)
+      .eq('job_id', id)
       .order('created_at');
 
     if (resultsError) throw resultsError;
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return new NextResponse(yamlContent, {
         headers: {
           'Content-Type': 'text/yaml',
-          'Content-Disposition': `attachment; filename="audit_${params.id}.yaml"`,
+          'Content-Disposition': `attachment; filename="audit_${id}.yaml"`,
         },
       });
     }

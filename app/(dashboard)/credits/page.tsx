@@ -10,8 +10,9 @@ export const dynamic = 'force-dynamic';
 export default async function CreditsPage({
   searchParams,
 }: {
-  searchParams: { success?: string; canceled?: string };
+  searchParams: Promise<{ success?: string; canceled?: string }>;
 }) {
+  const { success, canceled } = await searchParams;
   await requireUser();
   const supabase = await createClient();
 
@@ -39,7 +40,7 @@ export default async function CreditsPage({
         <p className="text-muted-foreground">Purchase credits to run code audits</p>
       </div>
 
-      {searchParams.success && (
+      {success && (
         <Alert className="border-green-500 bg-green-50">
           <CheckCircle className="h-4 w-4 text-green-500" />
           <AlertDescription className="text-green-700">
@@ -48,7 +49,7 @@ export default async function CreditsPage({
         </Alert>
       )}
 
-      {searchParams.canceled && (
+      {canceled && (
         <Alert className="border-destructive bg-destructive/10">
           <XCircle className="h-4 w-4" />
           <AlertDescription>Payment was canceled. No credits were added.</AlertDescription>
