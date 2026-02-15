@@ -8,6 +8,8 @@ import { AuditProgress } from '@/components/audit/AuditProgress';
 import { AuditResults } from '@/components/audit/AuditResults';
 import { Badge } from '@/components/ui/badge';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AuditDetailPage({ params }: { params: { id: string } }) {
   const user = await requireUser();
   const supabase = await createClient();

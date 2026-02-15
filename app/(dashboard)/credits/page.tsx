@@ -5,6 +5,8 @@ import { CreditBalance } from '@/components/billing/CreditBalance';
 import { PricingCards } from '@/components/billing/PricingCards';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
+export const dynamic = 'force-dynamic';
+
 export default async function CreditsPage({
   searchParams,
 }: {

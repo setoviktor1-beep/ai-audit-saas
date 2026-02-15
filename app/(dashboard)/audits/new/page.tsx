@@ -1,5 +1,7 @@
 import { AuditForm } from '@/components/audit/AuditForm';
 
+export const dynamic = 'force-dynamic';
+
 export default function NewAuditPage() {
   return (
     <div className="space-y-8">

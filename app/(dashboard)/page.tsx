@@ -3,6 +3,8 @@ import { requireUser } from '@/lib/auth/getUser';
 import { StatsCards } from '@/components/dashboard/StatsCards';
 import { RecentAudits } from '@/components/dashboard/RecentAudits';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const user = await requireUser();
   const supabase = await createClient();
