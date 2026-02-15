@@ -76,10 +76,10 @@ export function PricingCards({ packages }: PricingCardsProps) {
               className="w-full"
               variant={pkg.id === 'pro' ? 'default' : 'outline'}
               onClick={() => handlePurchase(pkg.id)}
-              disabled={loading !== null}
+              disabled={loading !== null || !pkg.stripePriceId}
             >
               {loading === pkg.id && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Buy Credits
+              {pkg.stripePriceId ? 'Buy Credits' : 'Not Configured'}
             </Button>
           </CardFooter>
         </Card>

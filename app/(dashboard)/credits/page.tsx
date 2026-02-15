@@ -4,6 +4,7 @@ import { requireUser } from '@/lib/auth/getUser';
 import { CreditBalance } from '@/components/billing/CreditBalance';
 import { PricingCards } from '@/components/billing/PricingCards';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { FALLBACK_PACKAGES } from '@/lib/billing/packages';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,7 +23,7 @@ export default async function CreditsPage({
     .eq('is_active', true)
     .order('price_cents');
 
-  const formattedPackages =
+  const dbPackages =
     packages?.map((p) => ({
       id: p.id,
       name: p.name,
@@ -32,6 +33,22 @@ export default async function CreditsPage({
       features: p.features as { maxModules?: number; reaudit?: boolean; description?: string },
       isActive: p.is_active,
     })) || [];
+
+  const fallbackPackages = FALLBACK_PACKAGES.map((p) => ({
+    id: p.id,
+    name: p.name,
+    priceCents: p.priceCents,
+    credits: p.credits,
+    stripePriceId: p.stripePriceId,
+    features: p.features,
+    isActive: p.isActive,
+  }));
+
+  const mergedById = new Map<string, (typeof fallbackPackages)[number]>();
+  for (const p of fallbackPackages) mergedById.set(p.id, p);
+  for (const p of dbPackages) mergedById.set(p.id, p);
+
+  const formattedPackages = Array.from(mergedById.values()).sort((a, b) => a.priceCents - b.priceCents);
 
   return (
     <div className="space-y-8">
@@ -53,6 +70,15 @@ export default async function CreditsPage({
         <Alert className="border-destructive bg-destructive/10">
           <XCircle className="h-4 w-4" />
           <AlertDescription>Payment was canceled. No credits were added.</AlertDescription>
+        </Alert>
+      )}
+
+      {!formattedPackages.some((pkg) => pkg.stripePriceId) && (
+        <Alert className="border-yellow-500 bg-yellow-50">
+          <AlertDescription className="text-yellow-800">
+            Stripe kainų ID dar nesukonfigūruoti. Pridėk STRIPE_PRICE_ID_STARTER, STRIPE_PRICE_ID_PRO ir
+            STRIPE_PRICE_ID_ADVANCED į Vercel Environment Variables.
+          </AlertDescription>
         </Alert>
       )}
 

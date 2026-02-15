@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createCheckoutSession } from '@/lib/stripe/checkout';
+import { getFallbackPackage } from '@/lib/billing/packages';
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,20 +28,42 @@ export async function POST(request: NextRequest) {
       .eq('is_active', true)
       .single();
 
-    if (pkgError || !pkg) {
+    const fallback = getFallbackPackage(packageId);
+
+    const selectedPackage = pkg
+      ? {
+          id: pkg.id,
+          credits: pkg.credits,
+          stripePriceId: pkg.stripe_price_id as string | undefined,
+        }
+      : fallback
+        ? {
+            id: fallback.id,
+            credits: fallback.credits,
+            stripePriceId: fallback.stripePriceId,
+          }
+        : null;
+
+    if (pkgError && !fallback) {
       return NextResponse.json({ error: 'Package not found' }, { status: 404 });
     }
 
-    if (!pkg.stripe_price_id) {
-      return NextResponse.json({ error: 'Package not configured for payments' }, { status: 400 });
+    if (!selectedPackage?.stripePriceId) {
+      return NextResponse.json(
+        {
+          error:
+            'Package not configured for payments. Set stripe_price_id in pricing_packages or STRIPE_PRICE_ID_* env vars.',
+        },
+        { status: 400 }
+      );
     }
 
     const session = await createCheckoutSession({
       userId: user.id,
       userEmail: user.email!,
-      packageId: pkg.id,
-      stripePriceId: pkg.stripe_price_id,
-      credits: pkg.credits,
+      packageId: selectedPackage.id,
+      stripePriceId: selectedPackage.stripePriceId,
+      credits: selectedPackage.credits,
     });
 
     return NextResponse.json({ url: session.url });
