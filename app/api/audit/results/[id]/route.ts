@@ -2,6 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import yaml from 'js-yaml';
 import { createClient } from '@/lib/supabase/server';
 
+function md(value: unknown) {
+  return String(value ?? '').replace(/\|/g, '\\|').replace(/\n/g, ' ');
+}
+
+function listBlock(title: string, items?: string[]) {
+  if (!items || items.length === 0) return [];
+  return [`#### ${title}`, '', ...items.map((item) => `- ${item}`), ''];
+}
+
 function toMarkdownReport(aggregated: any) {
   const lines: string[] = [];
 
@@ -16,14 +25,16 @@ function toMarkdownReport(aggregated: any) {
   lines.push('');
   lines.push('## Summary');
   lines.push('');
-  lines.push(`- Overall Score: ${aggregated.summary.overall_score}/100`);
-  lines.push(`- Modules Completed: ${aggregated.summary.modules_completed}`);
-  lines.push(`- Modules Failed: ${aggregated.summary.modules_failed}`);
-  lines.push(`- Total Issues: ${aggregated.summary.total_issues}`);
-  lines.push(`- Critical: ${aggregated.summary.critical}`);
-  lines.push(`- High: ${aggregated.summary.high}`);
-  lines.push(`- Medium: ${aggregated.summary.medium}`);
-  lines.push(`- Low: ${aggregated.summary.low}`);
+  lines.push('| Metric | Value |');
+  lines.push('|---|---:|');
+  lines.push(`| Overall Score | ${aggregated.summary.overall_score}/100 |`);
+  lines.push(`| Modules Completed | ${aggregated.summary.modules_completed} |`);
+  lines.push(`| Modules Failed | ${aggregated.summary.modules_failed} |`);
+  lines.push(`| Total Issues | ${aggregated.summary.total_issues} |`);
+  lines.push(`| Critical | ${aggregated.summary.critical} |`);
+  lines.push(`| High | ${aggregated.summary.high} |`);
+  lines.push(`| Medium | ${aggregated.summary.medium} |`);
+  lines.push(`| Low | ${aggregated.summary.low} |`);
   lines.push('');
   lines.push('## Modules');
   lines.push('');
@@ -37,19 +48,37 @@ function toMarkdownReport(aggregated: any) {
     lines.push(`- Processing Time (ms): ${moduleResult.processing_time_ms ?? 'N/A'}`);
     lines.push('');
 
+    const scoreEntries = Object.entries(moduleResult.results?.scores || {});
+    if (scoreEntries.length > 0) {
+      lines.push('#### Score Breakdown');
+      lines.push('');
+      lines.push('| Criterion | Score | Max | Justification |');
+      lines.push('|---|---:|---:|---|');
+      for (const [key, value] of scoreEntries as [string, any][]) {
+        lines.push(`| ${md(key.replace(/_/g, ' '))} | ${value?.score ?? 'N/A'} | ${value?.max ?? 'N/A'} | ${md(value?.justification ?? '')} |`);
+      }
+      lines.push('');
+    }
+
     const issues = moduleResult.results?.issues || [];
     if (issues.length > 0) {
       lines.push('#### Issues');
       lines.push('');
-      for (const issue of issues) {
-        lines.push(`- [${issue.severity}] ${issue.title}`);
-        lines.push(`  - Category: ${issue.category}`);
-        lines.push(`  - Description: ${issue.description}`);
-        if (issue.file) lines.push(`  - File: ${issue.file}${issue.line ? `:${issue.line}` : ''}`);
-        if (issue.suggestion) lines.push(`  - Suggestion: ${issue.suggestion}`);
+      lines.push('| Severity | Title | Category | File | Description | Suggestion |');
+      lines.push('|---|---|---|---|---|---|');
+      for (const issue of issues as any[]) {
+        const file = issue.file ? `${issue.file}${issue.line ? `:${issue.line}` : ''}` : '';
+        lines.push(
+          `| ${md(issue.severity)} | ${md(issue.title)} | ${md(issue.category)} | ${md(file)} | ${md(issue.description)} | ${md(issue.suggestion || issue.fix || '')} |`
+        );
       }
       lines.push('');
     }
+
+    const recommendations = moduleResult.results?.recommendations || {};
+    lines.push(...listBlock('Immediate', recommendations.immediate));
+    lines.push(...listBlock('Short Term', recommendations.short_term));
+    lines.push(...listBlock('Long Term', recommendations.long_term));
   }
 
   return lines.join('\n');
