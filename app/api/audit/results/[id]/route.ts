@@ -2,6 +2,59 @@ import { NextRequest, NextResponse } from 'next/server';
 import yaml from 'js-yaml';
 import { createClient } from '@/lib/supabase/server';
 
+function toMarkdownReport(aggregated: any) {
+  const lines: string[] = [];
+
+  lines.push(`# Audit Report: ${aggregated.source_name}`);
+  lines.push('');
+  lines.push(`- Job ID: ${aggregated.job_id}`);
+  lines.push(`- Audit Type: ${aggregated.audit_type}`);
+  lines.push(`- Status: ${aggregated.status}`);
+  lines.push(`- Created At: ${aggregated.created_at}`);
+  lines.push(`- Completed At: ${aggregated.completed_at || 'N/A'}`);
+  lines.push(`- Credits Used: ${aggregated.total_credits}`);
+  lines.push('');
+  lines.push('## Summary');
+  lines.push('');
+  lines.push(`- Overall Score: ${aggregated.summary.overall_score}/100`);
+  lines.push(`- Modules Completed: ${aggregated.summary.modules_completed}`);
+  lines.push(`- Modules Failed: ${aggregated.summary.modules_failed}`);
+  lines.push(`- Total Issues: ${aggregated.summary.total_issues}`);
+  lines.push(`- Critical: ${aggregated.summary.critical}`);
+  lines.push(`- High: ${aggregated.summary.high}`);
+  lines.push(`- Medium: ${aggregated.summary.medium}`);
+  lines.push(`- Low: ${aggregated.summary.low}`);
+  lines.push('');
+  lines.push('## Modules');
+  lines.push('');
+
+  for (const moduleResult of aggregated.modules || []) {
+    lines.push(`### ${moduleResult.name} (${moduleResult.id})`);
+    lines.push('');
+    lines.push(`- Status: ${moduleResult.status}`);
+    lines.push(`- Score: ${moduleResult.score ?? 'N/A'}`);
+    lines.push(`- Tokens Used: ${moduleResult.tokens_used ?? 'N/A'}`);
+    lines.push(`- Processing Time (ms): ${moduleResult.processing_time_ms ?? 'N/A'}`);
+    lines.push('');
+
+    const issues = moduleResult.results?.issues || [];
+    if (issues.length > 0) {
+      lines.push('#### Issues');
+      lines.push('');
+      for (const issue of issues) {
+        lines.push(`- [${issue.severity}] ${issue.title}`);
+        lines.push(`  - Category: ${issue.category}`);
+        lines.push(`  - Description: ${issue.description}`);
+        if (issue.file) lines.push(`  - File: ${issue.file}${issue.line ? `:${issue.line}` : ''}`);
+        if (issue.suggestion) lines.push(`  - Suggestion: ${issue.suggestion}`);
+      }
+      lines.push('');
+    }
+  }
+
+  return lines.join('\n');
+}
+
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const format = request.nextUrl.searchParams.get('format') || 'json';
@@ -89,6 +142,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         headers: {
           'Content-Type': 'text/yaml',
           'Content-Disposition': `attachment; filename="audit_${id}.yaml"`,
+        },
+      });
+    }
+
+    if (format === 'md') {
+      const markdown = toMarkdownReport(aggregated);
+      return new NextResponse(markdown, {
+        headers: {
+          'Content-Type': 'text/markdown; charset=utf-8',
+          'Content-Disposition': `attachment; filename="audit_${id}.md"`,
         },
       });
     }

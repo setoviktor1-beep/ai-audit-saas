@@ -183,6 +183,16 @@ export const CODE_MODULES: AuditModule[] = [
     dependencies: [],
     description: 'Prompts, safety, injection testing, costs',
   },
+  {
+    id: 'seo_integration',
+    name: 'SEO Integration',
+    category: 'code',
+    priority: 2,
+    credits: 10,
+    estimatedTokens: 9000,
+    dependencies: [],
+    description: 'Metadata, robots, sitemap, structured data, and social preview tags',
+  },
 ];
 
 export const LANDING_MODULES: AuditModule[] = [

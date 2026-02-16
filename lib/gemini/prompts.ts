@@ -17,6 +17,7 @@ export const CODE_PROMPTS: Record<string, string> = {
   ux_frontend: `Audit UX/frontend quality. ${BASE_OUTPUT}`,
   monetization: `Audit payment and monetization implementation. ${BASE_OUTPUT}`,
   ai_integration: `Audit AI integration and safety. ${BASE_OUTPUT}`,
+  seo_integration: `Audit SEO integration in the app codebase (metadata API usage, robots/sitemap files, canonical tags, OpenGraph/Twitter tags, and structured data). ${BASE_OUTPUT}`,
 };
 
 export const LANDING_PROMPTS: Record<string, string> = {

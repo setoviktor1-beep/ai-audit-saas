@@ -26,7 +26,16 @@ const features = [
   },
 ];
 
-const modules = ['Code Quality', 'Security', 'Deployment', 'Architecture', 'UX/Frontend', 'Monetization', 'AI Integration'];
+const modules = [
+  'Code Quality',
+  'Security',
+  'Deployment',
+  'Architecture',
+  'UX/Frontend',
+  'Monetization',
+  'AI Integration',
+  'SEO Integration',
+];
 
 const pricing = [
   {
@@ -121,7 +130,7 @@ export default function LandingPage() {
 
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-4">7 Audit Modules</h2>
+          <h2 className="text-3xl font-bold mb-4">8 Audit Modules</h2>
           <div className="flex flex-wrap justify-center gap-3">
             {modules.map((module) => (
               <Badge key={module} variant="outline" className="text-base py-2 px-4">

@@ -15,7 +15,7 @@ interface AuditResultsProps {
 export function AuditResults({ jobId, results }: AuditResultsProps) {
   const [downloading, setDownloading] = useState(false);
 
-  const handleDownload = async (format: 'json' | 'yaml') => {
+  const handleDownload = async (format: 'json' | 'yaml' | 'md') => {
     setDownloading(true);
     try {
       const response = await fetch(`/api/audit/results/${jobId}?format=${format}`);
@@ -45,6 +45,10 @@ export function AuditResults({ jobId, results }: AuditResultsProps) {
             <Button variant="outline" size="sm" onClick={() => handleDownload('yaml')} disabled={downloading}>
               <Download className="mr-2 h-4 w-4" />
               YAML
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handleDownload('md')} disabled={downloading}>
+              <Download className="mr-2 h-4 w-4" />
+              MD
             </Button>
           </div>
         </CardHeader>
